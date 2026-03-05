@@ -236,7 +236,7 @@
       ],
       "filename": "providers/videasy.js",
       "enabled": true,
-      "limited": true,
+      "limited": false,
       "formats": [
         "m3u8",
         "mp4",
