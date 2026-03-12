@@ -7,7 +7,7 @@ const express = require('express'); // used later when attaching proxy route
 const TIMEOUT_MS = 15000;
 const providers = [];
 const pDir = path.join(__dirname, 'providers');
-const allowed = ['uhdmovies', 'vixsrc', 'vidlink', 'netmirror'];
+const allowed = ['uhdmovies', 'vixsrc', 'vidlink', 'netmirror', 'webstreamer-latino'];
 
 if (fs.existsSync(pDir)) {
     fs.readdirSync(pDir).forEach(f => {
