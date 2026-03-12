@@ -10,15 +10,13 @@ const WEBSTREAMR_BASE = 'https://webstreamr.hayd.uk';
 
 async function getStreams(tmdbId, mediaType, season, episode) {
     try {
-        // Construct the URL for WebStreamr
-        let streamUrl;
-        if (mediaType === 'tv' && season && episode) {
-            // Format: /stream/tv/123:1:1.json
-            streamUrl = `${WEBSTREAMR_BASE}/stream/tv/${tmdbId}:${season}:${episode}.json`;
-        } else {
-            // Format: /stream/movie/123.json
-            streamUrl = `${WEBSTREAMR_BASE}/stream/movie/${tmdbId}.json`;
+        // WebStreamr public instance only reliably supports movies
+        if (mediaType !== 'movie') {
+            console.log(`[WebStreamer Latino] Skipping TV show (${tmdbId}) - public instance only supports movies`);
+            return [];
         }
+
+        const streamUrl = `${WEBSTREAMR_BASE}/stream/movie/${tmdbId}.json`;
 
         console.log(`[WebStreamer Latino] Fetching: ${streamUrl}`);
 
@@ -32,7 +30,7 @@ async function getStreams(tmdbId, mediaType, season, episode) {
 
         const data = response.data;
         if (!data.streams || !Array.isArray(data.streams)) {
-            console.log(`[WebStreamer Latino] No streams in response for ${tmdbId}`);
+            console.log(`[WebStreamer Latino] No streams in response for movie ${tmdbId}`);
             return [];
         }
 
