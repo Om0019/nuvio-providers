@@ -21,8 +21,8 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 const axios = require("axios");
 console.log("[NetMirror] Initializing NetMirror provider");
 const TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
-const NETMIRROR_BASE = "https://net22.cc";
-const NETMIRROR_PLAY = "https://net52.cc";
+const NETMIRROR_BASE = "https://netmirror.live";
+const NETMIRROR_PLAY = "https://netmirror.live";
 const BASE_HEADERS = {
   "X-Requested-With": "XMLHttpRequest",
   "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
@@ -61,6 +61,8 @@ function getStreams(tmdbId, type, season, episode) {
       const cookieString = `t_hash_t=${globalCookie}; ott=nf; hd=on`;
       
       function trySearch(useAlt) {
+        console.log(`[NetMirror] Trying search with platform: ${platform}`);
+        console.log(`[NetMirror] Request URL: ${NETMIRROR_PLAY}/tv/s.php`);
         return axios.get(`https://api.themoviedb.org/3/${type === "series" || type === "tv" ? "tv" : "movie"}/${tmdbId}?api_key=${TMDB_API_KEY}`).then(function(tmdbRes) {
           const year = type === "series" || type === "tv" ? tmdbRes.data.first_air_date ? tmdbRes.data.first_air_date.split("-")[0] : "" : tmdbRes.data.release_date ? tmdbRes.data.release_date.split("-")[0] : "";
           const titleToSearch = useAlt && tmdbRes.data.original_name ? tmdbRes.data.original_name : tmdbRes.data.name || tmdbRes.data.title;
@@ -80,7 +82,24 @@ function getStreams(tmdbId, type, season, episode) {
               "Cookie": cookieString
             })
           }).then(function(res) {
-            if (res.data && res.data.status === "success" && Array.isArray(res.data.streams)) {
+            if (!res) {
+              console.error('[NetMirror] No response received');
+              return null;
+            }
+            
+            if (res.status === 404) {
+              console.error(`[NetMirror] Endpoint not found: ${res.config.url}`);
+              return null; 
+            }
+
+            if (!res.data) {
+              console.error('[NetMirror] No data in response');
+              return null;
+            }
+
+            console.log('[NetMirror] Response data:', res.data);
+            
+            if (res.data?.status === "success" && Array.isArray(res.data.streams)) {
               console.log("[NetMirror] stream count:", res.data.streams.length);
               
               const streams = res.data.streams
