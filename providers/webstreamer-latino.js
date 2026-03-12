@@ -30,16 +30,13 @@ async function getStreams(tmdbId, mediaType, season, episode) {
             return [];
         }
 
-        // Filter for Spanish/Latino streams only
+        // Filter for Latin American Spanish (Latino) streams only
         const latinoStreams = data.streams
             .filter(stream => {
                 if (!stream.title) return false;
                 const lowerTitle = stream.title.toLowerCase();
-                // Include only Latino or Spanish language streams
-                return lowerTitle.includes('latino') || 
-                       lowerTitle.includes('español') || 
-                       lowerTitle.includes('castellano') ||
-                       lowerTitle.includes('spanish');
+                // Include only Latino streams (Latin American Spanish), exclude Castilian
+                return lowerTitle.includes('latino');
             })
             .map(stream => ({
                 name: 'WebStreamer',
