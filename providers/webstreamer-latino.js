@@ -13,22 +13,30 @@ async function getStreams(tmdbId, mediaType, season, episode) {
         // Construct the URL for WebStreamr
         let streamUrl;
         if (mediaType === 'tv' && season && episode) {
-            streamUrl = `${WEBSTREAMR_BASE}/stream/${mediaType}/${tmdbId}:${season}:${episode}.json`;
+            // Format: /stream/tv/123:1:1.json
+            streamUrl = `${WEBSTREAMR_BASE}/stream/tv/${tmdbId}:${season}:${episode}.json`;
         } else {
-            streamUrl = `${WEBSTREAMR_BASE}/stream/${mediaType}/${tmdbId}.json`;
+            // Format: /stream/movie/123.json
+            streamUrl = `${WEBSTREAMR_BASE}/stream/movie/${tmdbId}.json`;
         }
+
+        console.log(`[WebStreamer Latino] Fetching: ${streamUrl}`);
 
         const response = await axios.get(streamUrl, {
             timeout: 10000,
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Accept': 'application/json'
             }
         });
 
         const data = response.data;
         if (!data.streams || !Array.isArray(data.streams)) {
+            console.log(`[WebStreamer Latino] No streams in response for ${tmdbId}`);
             return [];
         }
+
+        console.log(`[WebStreamer Latino] Found ${data.streams.length} streams, filtering for latino...`);
 
         // Filter for Latin American Spanish (Latino) streams only
         const latinoStreams = data.streams
@@ -49,9 +57,11 @@ async function getStreams(tmdbId, mediaType, season, episode) {
                 subtitles: stream.subtitles || []
             }));
 
+        console.log(`[WebStreamer Latino] Returning ${latinoStreams.length} latino streams`);
         return latinoStreams;
     } catch (error) {
-        console.error('[WebStreamer Latino] Error fetching streams:', error.message);
+        const status = error.response?.status || 'unknown';
+        console.error(`[WebStreamer Latino] Error fetching streams (${status}):`, error.message);
         return [];
     }
 }
