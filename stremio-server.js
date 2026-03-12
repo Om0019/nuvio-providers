@@ -6,7 +6,7 @@ const axios = require("axios");
 const TIMEOUT_MS = 15000;
 const providers = [];
 const pDir = path.join(__dirname, 'providers');
-const allowed = ['uhdmovies', 'netmirror', 'vixsrc', 'vidlink'];
+const allowed = ['uhdmovies', 'vixsrc', 'vidlink'];
 
 if (fs.existsSync(pDir)) {
     fs.readdirSync(pDir).forEach(f => {
