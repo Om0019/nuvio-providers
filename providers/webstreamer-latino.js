@@ -1,87 +1,18 @@
 /**
  * webstreamer-latino - Direct scraper for Latin American Spanish streams
- * Targets: HomeCine, CineHDPlus, Cuevana, VerHdLink
+ * Targets: CineHDPlus, Cuevana, VerHdLink (exclusively Latino/Mexican)
  */
 "use strict";
 
 const axios = require('axios');
 const cheerio = require('cheerio-without-node-native');
 
-// Sources for Latino content
+// Sources for exclusively Latino content
 const SOURCES = {
-    homecine: { base: 'https://www3.homecine.to', name: 'HomeCine' },
     cinehdplus: { base: 'https://cinehdplus.gratis', name: 'CineHDPlus' },
     cuevana: { base: 'https://ww1.cuevana3.is', name: 'Cuevana' },
     verhdlink: { base: 'https://verhdlink.cam', name: 'VerHdLink' }
 };
-
-async function searchHomeCine(title, year) {
-    try {
-        const searchUrl = `${SOURCES.homecine.base}/?s=${encodeURIComponent(title)}`;
-        console.log(`[Latino Scraper] Searching HomeCine: ${searchUrl}`);
-
-        const response = await axios.get(searchUrl, {
-            timeout: 8000,
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-        });
-
-        const $ = cheerio.load(response.data);
-        const results = [];
-
-        $('a.Selectable').each((i, el) => {
-            const href = $(el).attr('href');
-            const text = $(el).text().trim();
-            if (href && text) {
-                results.push({ href, title: text });
-            }
-        });
-
-        if (results.length > 0) {
-            console.log(`[Latino Scraper] Found ${results.length} results on HomeCine for "${title}"`);
-            return results[0].href;
-        }
-
-        return null;
-    } catch (error) {
-        console.error(`[Latino Scraper] HomeCine search error:`, error.message);
-        return null;
-    }
-}
-
-async function extractLatinoFromHomeCine(pageUrl) {
-    try {
-        const response = await axios.get(pageUrl, {
-            timeout: 8000,
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
-        });
-
-        const $ = cheerio.load(response.data);
-        const streams = [];
-
-        $('.les-content a').each((i, el) => {
-            const text = $(el).text().toLowerCase();
-            if (text.includes('latino')) {
-                const iframeSrc = $('iframe', el).attr('src');
-                if (iframeSrc) {
-                    streams.push({
-                        name: 'HomeCine Latino',
-                        title: text.trim(),
-                        url: iframeSrc,
-                        headers: { 'Referer': pageUrl, 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
-                    });
-                }
-            }
-        });
-
-        console.log(`[Latino Scraper] HomeCine: ${streams.length} Latino streams`);
-        return streams;
-    } catch (error) {
-        console.error(`[Latino Scraper] HomeCine extraction error:`, error.message);
-        return [];
-    }
-}
 
 async function searchCineHDPlus(title, year, tmdbId) {
     try {
@@ -236,6 +167,29 @@ async function extractLatinoFromVerHdLink(pageUrl) {
     }
 }
 
+async function searchVerHdLink(title, year) {
+    try {
+        const searchUrl = `${SOURCES.verhdlink.base}/?s=${encodeURIComponent(title)}`;
+        console.log(`[Latino Scraper] Searching VerHdLink`);
+
+        const response = await axios.get(searchUrl, {
+            timeout: 8000,
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+        });
+
+        const $ = cheerio.load(response.data);
+        const firstResult = $('a[href*="/movie/"]').first().attr('href');
+        if (firstResult) {
+            console.log(`[Latino Scraper] Found VerHdLink result`);
+            return firstResult.startsWith('http') ? firstResult : `${SOURCES.verhdlink.base}${firstResult}`;
+        }
+        return null;
+    } catch (error) {
+        console.error(`[Latino Scraper] VerHdLink search error:`, error.message);
+        return null;
+    }
+}
+
 async function getStreams(tmdbId, mediaType, season, episode) {
     try {
         const tmdbUrl = `https://api.themoviedb.org/3/${mediaType === 'tv' ? 'tv' : 'movie'}/${tmdbId}?api_key=68e094699525b18a70bab2f86b1fa706`;
@@ -256,13 +210,6 @@ async function getStreams(tmdbId, mediaType, season, episode) {
 
         let allStreams = [];
 
-        // Try HomeCine
-        const homecineUrl = await searchHomeCine(title, year);
-        if (homecineUrl) {
-            const streams = await extractLatinoFromHomeCine(homecineUrl);
-            allStreams = allStreams.concat(streams);
-        }
-
         // Try CineHDPlus (works better with TMDB ID)
         const cinehdplusUrl = await searchCineHDPlus(title, year, tmdbId);
         if (cinehdplusUrl) {
@@ -274,6 +221,13 @@ async function getStreams(tmdbId, mediaType, season, episode) {
         const cuevanaUrl = await searchCuevana(title, year);
         if (cuevanaUrl) {
             const streams = await extractLatinoFromCuevana(cuevanaUrl);
+            allStreams = allStreams.concat(streams);
+        }
+
+        // Try VerHdLink
+        const verhdlinkUrl = await searchVerHdLink(title, year);
+        if (verhdlinkUrl) {
+            const streams = await extractLatinoFromVerHdLink(verhdlinkUrl);
             allStreams = allStreams.concat(streams);
         }
 
