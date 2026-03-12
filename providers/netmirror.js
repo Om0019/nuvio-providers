@@ -39,7 +39,8 @@ function getStreams(tmdbId, type, season, episode) {
   }).then(function(response) {
     const setCookie = response.headers["set-cookie"];
     console.log("[NetMirror] p.php status:", response.status);
-    console.log("[NetMirror] set-cookie exists:", !!setCookie);
+    console.log("[NetMirror] headers:", response.headers);
+    console.log("[NetMirror] set-cookie:", setCookie);
     
     if (setCookie) {
       const match = setCookie[0].match(/t_hash_t=([^;]+)/);
@@ -126,9 +127,10 @@ function getStreams(tmdbId, type, season, episode) {
       
       return trySearch(false).then(function(result) {
         if (result && result.length > 0) {
+          console.log(`[NetMirror] Found ${result.length} streams on ${platform}`);
           return result;
         } else {
-          console.log(`[NetMirror] No content found on ${platform}, trying next platform`);
+          console.log(`[NetMirror] No content found on ${platform}, status ${res?.status}, data:`, res?.data);
           return tryPlatform(platformIndex + 1);
         }
       }).catch(function(error) {
