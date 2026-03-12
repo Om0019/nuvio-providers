@@ -175,7 +175,9 @@ function startServer(addonInterface, opts = {}) {
             res.end(landingHTML);
         });
 
-    const server = app.listen(opts.port);
+    // bind to a host if provided; default to 0.0.0.0 for cloud environments
+    const host = opts.host || '0.0.0.0';
+    const server = app.listen(opts.port, host);
     return new Promise((resolve, reject) => {
         server.on('listening', () => {
             const url = `http://127.0.0.1:${server.address().port}/manifest.json`;
@@ -186,7 +188,10 @@ function startServer(addonInterface, opts = {}) {
     });
 }
 
-startServer(builder.getInterface(), { port: 7010 }).then(({ server, url }) => {
+// allow the port to be specified by the environment (Render, Heroku, etc.)
+const PORT = process.env.PORT || 7010;
+
+startServer(builder.getInterface(), { port: PORT }).then(({ server, url }) => {
     ADDON_BASE = url.replace(/\/manifest\.json$/, '');
     console.log('addon base url:', ADDON_BASE);
 
