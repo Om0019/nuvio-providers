@@ -20,18 +20,33 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 
 const axios = require("axios");
 console.log("[NetMirror] Initializing NetMirror provider");
-const TMDB_API_KEY = "439c478a771f35c05022f9feabcca01c";
-const NETMIRROR_BASE = "https://netmirror.live";
-const NETMIRROR_PLAY = "https://netmirror.live";
+const TMDB_API_KEY = "1865f43a0549ca50d341dd9ab8b29f49"; // Using same valid key as other providers
+const NETMIRROR_BASE = "https://netmirror.tv"; // Testing newer domain
+const NETMIRROR_PLAY = "https://netmirror.tv"; // Testing newer domain
 const BASE_HEADERS = {
   "X-Requested-With": "XMLHttpRequest",
   "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
 };
 
+async function isDomainAccessible(baseUrl) {
+    try {
+        const resp = await fetch(baseUrl, { method: 'HEAD', timeout: 3000 });
+        return resp.ok;
+    } catch {
+        return false;
+    }
+}
+
 function getStreams(tmdbId, type, season, episode) {
   console.log("[NetMirror] getStreams called:", { tmdbId, type, season, episode });
   let globalCookie = "";
   
+  // Check domains first
+  if (!isDomainAccessible(NETMIRROR_BASE) || !isDomainAccessible(NETMIRROR_PLAY)) {
+    console.error('[NetMirror] Domains not accessible');
+    return Promise.resolve([]);
+  }
+
   return axios.post(`${NETMIRROR_PLAY}/tv/p.php`, null, {
     headers: __spreadValues(__spreadValues({}, BASE_HEADERS), {
       "Referer": `${NETMIRROR_BASE}/`
