@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: nuvio-providers
+    env: node
+    repo: https://github.com/Om0019/nuvio-providers.git
+    branch: main
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
